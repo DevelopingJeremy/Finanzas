@@ -10,6 +10,48 @@ class NegocioController extends BaseController {
         $this->render('negocios/index', ['negocios' => $negocios], 'Negocios');
     }
 
+    public function show(): void {
+        $id = (int)($_GET['id'] ?? 0);
+        $negocio = $this->model->findById($id, $this->userId());
+        if (!$negocio) {
+            $this->flash('danger', 'Negocio no encontrado.');
+            $this->redirect('/?c=negocios&a=index');
+        }
+
+        // Cuentas del negocio
+        $cuentas = $this->model->getCuentas($id);
+
+        // Cuenta seleccionada (puede venir por GET ?cuenta_id=X)
+        $cuentaSelId = (int)($_GET['cuenta_id'] ?? ($cuentas[0]['id'] ?? 0));
+        $cuentaSel   = null;
+        $bolsillos   = [];
+        $transacciones = [];
+        $totalesCuenta = ['ingreso' => 0, 'gasto' => 0, 'transferencia' => 0];
+
+        if ($cuentaSelId) {
+            foreach ($cuentas as $c) {
+                if ((int)$c['id'] === $cuentaSelId) { $cuentaSel = $c; break; }
+            }
+            if ($cuentaSel) {
+                $bolsillos     = $this->model->getBolsillos($cuentaSelId);
+                $transacciones = $this->model->getTransaccionesCuenta($cuentaSelId, $id);
+                $totalesCuenta = $this->model->getTotalesCuenta($cuentaSelId, $id);
+            }
+        }
+
+        // Recordatorios pendientes del negocio
+        $recordatorios = $this->model->getRecordatoriosPendientes($id, $this->userId());
+
+        // Resumen global del negocio
+        $resumen = $this->model->getResumenNegocio($id, $this->userId());
+
+        $this->render('negocios/show', compact(
+            'negocio', 'cuentas', 'cuentaSel', 'cuentaSelId',
+            'bolsillos', 'transacciones', 'totalesCuenta',
+            'recordatorios', 'resumen'
+        ), '🏢 ' . $negocio['nombre']);
+    }
+
     public function create(): void {
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $errors = $this->required(['nombre'], $_POST);

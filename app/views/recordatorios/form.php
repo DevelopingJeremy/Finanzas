@@ -3,7 +3,7 @@
     <a href="/finanzas/public/?c=recordatorios&a=index" class="btn btn-secondary">← Volver</a>
 </div>
 
-<div class="card" style="max-width:650px;">
+<div class="card" style="max-width:680px;">
     <?php if (!empty($errors)): ?>
         <div class="alert alert-danger">❌ <?= htmlspecialchars($errors[0]) ?></div>
     <?php endif; ?>
@@ -16,7 +16,7 @@
             </div>
             <div class="form-group">
                 <label class="form-label" for="tipo">Tipo *</label>
-                <select id="tipo" name="tipo" class="form-control" required>
+                <select id="tipo" name="tipo" class="form-control" required onchange="toggleCliente(this.value)">
                     <option value="pagar"  <?= ($recordatorio['tipo']??'') === 'pagar'  ? 'selected':'' ?>>💳 Pagar</option>
                     <option value="cobrar" <?= ($recordatorio['tipo']??'') === 'cobrar' ? 'selected':'' ?>>💰 Cobrar</option>
                 </select>
@@ -38,10 +38,10 @@
             <div class="form-group">
                 <label class="form-label" for="frecuencia">Frecuencia</label>
                 <select id="frecuencia" name="frecuencia" class="form-control">
-                    <option value="ninguna"  <?= ($recordatorio['frecuencia']??'ninguna') === 'ninguna'  ? 'selected':'' ?>>Sin repetición</option>
-                    <option value="diario"   <?= ($recordatorio['frecuencia']??'') === 'diario'   ? 'selected':'' ?>>Diario</option>
-                    <option value="semanal"  <?= ($recordatorio['frecuencia']??'') === 'semanal'  ? 'selected':'' ?>>Semanal</option>
-                    <option value="mensual"  <?= ($recordatorio['frecuencia']??'') === 'mensual'  ? 'selected':'' ?>>Mensual</option>
+                    <option value="ninguna" <?= ($recordatorio['frecuencia']??'ninguna') === 'ninguna' ? 'selected':'' ?>>Sin repetición</option>
+                    <option value="diario"  <?= ($recordatorio['frecuencia']??'') === 'diario'  ? 'selected':'' ?>>Diario</option>
+                    <option value="semanal" <?= ($recordatorio['frecuencia']??'') === 'semanal' ? 'selected':'' ?>>Semanal</option>
+                    <option value="mensual" <?= ($recordatorio['frecuencia']??'') === 'mensual' ? 'selected':'' ?>>Mensual</option>
                 </select>
             </div>
             <div class="form-group">
@@ -65,13 +65,38 @@
                 </select>
             </div>
             <div class="form-group">
-                <label class="form-label" for="cuenta_id">Cuenta</label>
-                <select id="cuenta_id" name="cuenta_id" class="form-control">
+                <label class="form-label" for="cuenta_id">Cuenta <span class="text-muted" style="font-size:.8em;">(se afectará al pagar)</span></label>
+                <select id="cuenta_id" name="cuenta_id" class="form-control" onchange="filtrarBolsillos(this.value)">
                     <option value="">— Sin cuenta —</option>
                     <?php foreach ($cuentas as $c): ?>
                     <option value="<?= $c['id'] ?>" <?= ($recordatorio['cuenta_id']??'') == $c['id'] ? 'selected':'' ?>><?= htmlspecialchars($c['nombre']) ?></option>
                     <?php endforeach; ?>
                 </select>
+            </div>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label class="form-label" for="subcuenta_id">Bolsillo / Subcuenta <span class="text-muted" style="font-size:.8em;">(opcional, fijo)</span></label>
+                <select id="subcuenta_id" name="subcuenta_id" class="form-control">
+                    <option value="">— Sin bolsillo —</option>
+                    <?php foreach ($subcuentas as $s): ?>
+                    <option value="<?= $s['id'] ?>"
+                            data-cuenta="<?= $s['cuenta_id'] ?>"
+                            <?= ($recordatorio['subcuenta_id']??'') == $s['id'] ? 'selected':'' ?>>
+                        <?= htmlspecialchars($s['cuenta_nombre'] . ' › ' . $s['nombre']) ?>
+                    </option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div class="form-group" id="group_cliente" style="<?= ($recordatorio['tipo']??'') === 'cobrar' ? '' : 'display:none;' ?>">
+                <label class="form-label" for="cliente_id">Asociar a Cliente</label>
+                <select id="cliente_id" name="cliente_id" class="form-control">
+                    <option value="">— Sin cliente —</option>
+                    <?php foreach ($clientes as $cli): ?>
+                    <option value="<?= $cli['id'] ?>" <?= ($recordatorio['cliente_id']??'') == $cli['id'] ? 'selected':'' ?>><?= htmlspecialchars($cli['nombre']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <small class="text-muted">Si se asocia, el cobro aparecerá en el historial del cliente.</small>
             </div>
         </div>
         <div style="display:flex;gap:.75rem;margin-top:1rem;">
@@ -80,3 +105,31 @@
         </div>
     </form>
 </div>
+
+<script>
+function toggleCliente(tipo) {
+    const group = document.getElementById('group_cliente');
+    group.style.display = (tipo === 'cobrar') ? '' : 'none';
+    if (tipo !== 'cobrar') document.getElementById('cliente_id').value = '';
+}
+
+// Filtra los bolsillos según la cuenta seleccionada
+function filtrarBolsillos(cuentaId) {
+    const select = document.getElementById('subcuenta_id');
+    const opts = select.querySelectorAll('option[data-cuenta]');
+    let hasVisible = false;
+    opts.forEach(opt => {
+        const show = !cuentaId || opt.dataset.cuenta === cuentaId;
+        opt.style.display = show ? '' : 'none';
+        if (show) hasVisible = true;
+        // Deselect hidden options
+        if (!show && opt.selected) { opt.selected = false; select.value = ''; }
+    });
+    // Si no hay bolsillos para esta cuenta, resetear
+    if (!hasVisible && cuentaId) select.value = '';
+}
+// Ejecutar al cargar para filtrar según cuenta ya seleccionada
+document.addEventListener('DOMContentLoaded', () => {
+    filtrarBolsillos(document.getElementById('cuenta_id').value);
+});
+</script>
