@@ -3,7 +3,8 @@
 $currentC = $_GET['c'] ?? 'dashboard';
 $currentA = $_GET['a'] ?? 'index';
 
-function isActive(string $ctrl): string {
+function isActive(string $ctrl): string
+{
     global $currentC;
     return $currentC === $ctrl ? 'active' : '';
 }
@@ -22,7 +23,7 @@ function isActive(string $ctrl): string {
     <div class="sidebar-section">Principal</div>
     <ul class="sidebar-nav">
         <li>
-            <a href="/finanzas/public/?c=dashboard&a=index" class="<?= isActive('dashboard') ?>">
+            <a href="/public/?c=dashboard&a=index" class="<?= isActive('dashboard') ?>">
                 <span class="nav-icon">📊</span> Dashboard
             </a>
         </li>
@@ -31,22 +32,22 @@ function isActive(string $ctrl): string {
     <div class="sidebar-section">Estructura</div>
     <ul class="sidebar-nav">
         <li>
-            <a href="/finanzas/public/?c=negocios&a=index" class="<?= isActive('negocios') ?>">
+            <a href="/public/?c=negocios&a=index" class="<?= isActive('negocios') ?>">
                 <span class="nav-icon">🏢</span> Negocios
             </a>
         </li>
         <li>
-            <a href="/finanzas/public/?c=cuentas&a=index" class="<?= isActive('cuentas') ?>">
+            <a href="/public/?c=cuentas&a=index" class="<?= isActive('cuentas') ?>">
                 <span class="nav-icon">🏦</span> Cuentas
             </a>
         </li>
         <li>
-            <a href="/finanzas/public/?c=subcuentas&a=index" class="<?= isActive('subcuentas') ?>">
+            <a href="/public/?c=subcuentas&a=index" class="<?= isActive('subcuentas') ?>">
                 <span class="nav-icon">👛</span> Bolsillos
             </a>
         </li>
         <li>
-            <a href="/finanzas/public/?c=categorias&a=index" class="<?= isActive('categorias') ?>">
+            <a href="/public/?c=categorias&a=index" class="<?= isActive('categorias') ?>">
                 <span class="nav-icon">🏷️</span> Categorías
             </a>
         </li>
@@ -55,12 +56,12 @@ function isActive(string $ctrl): string {
     <div class="sidebar-section">Movimientos</div>
     <ul class="sidebar-nav">
         <li>
-            <a href="/finanzas/public/?c=transacciones&a=index" class="<?= isActive('transacciones') ?>">
+            <a href="/public/?c=transacciones&a=index" class="<?= isActive('transacciones') ?>">
                 <span class="nav-icon">💸</span> Transacciones
             </a>
         </li>
         <li>
-            <a href="/finanzas/public/?c=recordatorios&a=index" class="<?= isActive('recordatorios') ?>">
+            <a href="/public/?c=recordatorios&a=index" class="<?= isActive('recordatorios') ?>">
                 <span class="nav-icon">🔔</span> Recordatorios
             </a>
         </li>
@@ -69,7 +70,7 @@ function isActive(string $ctrl): string {
     <div class="sidebar-section">Clientes</div>
     <ul class="sidebar-nav">
         <li>
-            <a href="/finanzas/public/?c=clientes&a=index" class="<?= isActive('clientes') ?>">
+            <a href="/public/?c=clientes&a=index" class="<?= isActive('clientes') ?>">
                 <span class="nav-icon">👥</span> Clientes
             </a>
         </li>
@@ -85,7 +86,7 @@ function isActive(string $ctrl): string {
                     <?= htmlspecialchars($_SESSION['usuario_nombre'] ?? 'Usuario') ?>
                 </div>
                 <div style="font-size:0.7rem;">
-                    <a href="/finanzas/public/?c=auth&a=logout" style="color:var(--red);">
+                    <a href="/public/?c=auth&a=logout" style="color:var(--red);">
                         Cerrar sesión
                     </a>
                 </div>
@@ -105,7 +106,7 @@ function isActive(string $ctrl): string {
             </div>
         </div>
         <div class="topbar-actions">
-            <a href="/finanzas/public/?c=transacciones&a=create" class="btn btn-primary btn-sm">
+            <a href="/public/?c=transacciones&a=create" class="btn btn-primary btn-sm">
                 + Nueva Transacción
             </a>
         </div>
@@ -113,11 +114,12 @@ function isActive(string $ctrl): string {
 
     <!-- FLASH MESSAGE -->
     <?php if (isset($_SESSION['flash'])): ?>
-        <?php $flash = $_SESSION['flash']; unset($_SESSION['flash']); ?>
+        <?php $flash = $_SESSION['flash'];
+        unset($_SESSION['flash']); ?>
         <div style="padding: 0 1.5rem; padding-top:1rem;">
             <div class="alert alert-<?= htmlspecialchars($flash['type']) ?>">
                 <?php
-                $icons = ['success'=>'✅','danger'=>'❌','warning'=>'⚠️','info'=>'ℹ️'];
+                $icons = ['success' => '✅', 'danger' => '❌', 'warning' => '⚠️', 'info' => 'ℹ️'];
                 echo $icons[$flash['type']] ?? '';
                 ?>
                 <?= htmlspecialchars($flash['message']) ?>
@@ -128,14 +130,14 @@ function isActive(string $ctrl): string {
     <!-- PAGE CONTENT START -->
     <div class="page-content">
 
-<!-- Sidebar Overlay -->
-<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+        <!-- Sidebar Overlay -->
+        <div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
 
-<script>
-function toggleSidebar() {
-    const sidebar = document.getElementById('sidebar');
-    const overlay = document.getElementById('sidebar-overlay');
-    sidebar.classList.toggle('open');
-    overlay.classList.toggle('active');
-}
-</script>
+        <script>
+            function toggleSidebar() {
+                const sidebar = document.getElementById('sidebar');
+                const overlay = document.getElementById('sidebar-overlay');
+                sidebar.classList.toggle('open');
+                overlay.classList.toggle('active');
+            }
+        </script>

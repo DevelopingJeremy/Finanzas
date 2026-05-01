@@ -1,4 +1,4 @@
 <?php
 // Redirección al front controller principal
-header('Location: /finanzas/public/');
+header('Location: /public/');
 exit;

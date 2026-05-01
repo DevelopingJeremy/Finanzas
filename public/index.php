@@ -6,7 +6,7 @@
 
 // Definir rutas base
 define('BASE_PATH', dirname(__DIR__));
-define('BASE_URL', '/finanzas/public');
+define('BASE_URL', '/public');
 
 // Iniciar sesión
 if (session_status() === PHP_SESSION_NONE) {

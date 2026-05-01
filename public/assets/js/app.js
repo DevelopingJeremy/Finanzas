@@ -136,4 +136,4 @@ function confirmDelete(url, name = 'este registro') {
 /* =============================================
    BASE URL para fetch
    ============================================= */
-const BASE_URL = '/finanzas/public';
+const BASE_URL = '/public';

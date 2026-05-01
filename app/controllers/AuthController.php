@@ -4,16 +4,19 @@ require_once BASE_PATH . '/app/models/Usuario.php';
 /**
  * AuthController - Maneja login, registro y logout
  */
-class AuthController extends BaseController {
+class AuthController extends BaseController
+{
 
     private Usuario $model;
 
-    public function __construct() {
+    public function __construct()
+    {
         $this->model = new Usuario();
     }
 
     /** GET/POST: Formulario de login */
-    public function login(): void {
+    public function login(): void
+    {
         // Si ya está autenticado, ir al dashboard
         if (isset($_SESSION['usuario_id'])) {
             $this->redirect('/?c=dashboard&a=index');
@@ -22,7 +25,7 @@ class AuthController extends BaseController {
         $errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $email    = trim($_POST['email'] ?? '');
+            $email = trim($_POST['email'] ?? '');
             $password = $_POST['password'] ?? '';
 
             if (empty($email) || empty($password)) {
@@ -32,9 +35,9 @@ class AuthController extends BaseController {
 
                 if ($usuario && $this->model->verifyPassword($password, $usuario['password'])) {
                     // Iniciar sesión
-                    $_SESSION['usuario_id']     = $usuario['id'];
+                    $_SESSION['usuario_id'] = $usuario['id'];
                     $_SESSION['usuario_nombre'] = $usuario['nombre'];
-                    $_SESSION['usuario_email']  = $usuario['email'];
+                    $_SESSION['usuario_email'] = $usuario['email'];
 
                     // Regenerar ID de sesión para prevenir session fixation
                     session_regenerate_id(true);
@@ -50,7 +53,8 @@ class AuthController extends BaseController {
     }
 
     /** GET/POST: Formulario de registro */
-    public function register(): void {
+    public function register(): void
+    {
         if (isset($_SESSION['usuario_id'])) {
             $this->redirect('/?c=dashboard&a=index');
         }
@@ -58,17 +62,22 @@ class AuthController extends BaseController {
         $errors = [];
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $nombre   = trim($_POST['nombre']   ?? '');
-            $email    = trim($_POST['email']    ?? '');
-            $password = $_POST['password']      ?? '';
-            $confirm  = $_POST['password_confirm'] ?? '';
+            $nombre = trim($_POST['nombre'] ?? '');
+            $email = trim($_POST['email'] ?? '');
+            $password = $_POST['password'] ?? '';
+            $confirm = $_POST['password_confirm'] ?? '';
 
             // Validaciones
-            if (empty($nombre))    $errors[] = 'El nombre es requerido.';
-            if (empty($email))     $errors[] = 'El email es requerido.';
-            if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Email inválido.';
-            if (strlen($password) < 8) $errors[] = 'La contraseña debe tener mínimo 8 caracteres.';
-            if ($password !== $confirm) $errors[] = 'Las contraseñas no coinciden.';
+            if (empty($nombre))
+                $errors[] = 'El nombre es requerido.';
+            if (empty($email))
+                $errors[] = 'El email es requerido.';
+            if (!filter_var($email, FILTER_VALIDATE_EMAIL))
+                $errors[] = 'Email inválido.';
+            if (strlen($password) < 8)
+                $errors[] = 'La contraseña debe tener mínimo 8 caracteres.';
+            if ($password !== $confirm)
+                $errors[] = 'Las contraseñas no coinciden.';
 
             if (empty($errors) && $this->model->emailExists($email)) {
                 $errors[] = 'Este email ya está registrado.';
@@ -88,10 +97,11 @@ class AuthController extends BaseController {
     }
 
     /** Logout: Destruir sesión y redirigir */
-    public function logout(): void {
+    public function logout(): void
+    {
         $_SESSION = [];
         session_destroy();
-        header('Location: /finanzas/public/?c=auth&a=login');
+        header('Location: /public/?c=auth&a=login');
         exit;
     }
 }
