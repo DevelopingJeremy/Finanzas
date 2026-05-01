@@ -71,9 +71,9 @@ class Transaccion {
     /** Totales agrupados por negocio */
     public function getTotalesByNegocio(int $userId): array {
         $stmt = $this->db->prepare(
-            "SELECT n.nombre, t.tipo, SUM(t.monto) AS total
+            "SELECT IFNULL(n.nombre, '🏠 Personal/Sin Negocio') AS nombre, t.tipo, SUM(t.monto) AS total
              FROM transacciones t
-             JOIN negocios n ON t.negocio_id = n.id
+             LEFT JOIN negocios n ON t.negocio_id = n.id
              WHERE t.usuario_id=? AND t.estado='completado'
              GROUP BY t.negocio_id, t.tipo
              ORDER BY n.nombre"

@@ -10,10 +10,11 @@ function isActive(string $ctrl): string {
 ?>
 <!-- SIDEBAR -->
 <aside class="sidebar" id="sidebar">
+    <button class="sidebar-close" onclick="toggleSidebar()">✕</button>
     <div class="sidebar-brand">
         <div class="brand-icon">💰</div>
         <div>
-            <div class="brand-name">FinanzasApp</div>
+            <div class="brand-name">GestiCash</div>
             <div class="brand-sub">Panel de control</div>
         </div>
     </div>
@@ -97,8 +98,11 @@ function isActive(string $ctrl): string {
 <div class="main-content">
     <!-- TOPBAR -->
     <header class="topbar">
-        <div class="topbar-title">
-            <?= isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Dashboard' ?>
+        <div style="display: flex; align-items: center; gap: 1rem;">
+            <button class="sidebar-toggle" onclick="toggleSidebar()">☰</button>
+            <div class="topbar-title">
+                <?= isset($pageTitle) ? htmlspecialchars($pageTitle) : 'Dashboard' ?>
+            </div>
         </div>
         <div class="topbar-actions">
             <a href="/finanzas/public/?c=transacciones&a=create" class="btn btn-primary btn-sm">
@@ -123,3 +127,15 @@ function isActive(string $ctrl): string {
 
     <!-- PAGE CONTENT START -->
     <div class="page-content">
+
+<!-- Sidebar Overlay -->
+<div class="sidebar-overlay" id="sidebar-overlay" onclick="toggleSidebar()"></div>
+
+<script>
+function toggleSidebar() {
+    const sidebar = document.getElementById('sidebar');
+    const overlay = document.getElementById('sidebar-overlay');
+    sidebar.classList.toggle('open');
+    overlay.classList.toggle('active');
+}
+</script>

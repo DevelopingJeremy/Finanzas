@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="Gestión de finanzas personales y negocios - Panel de control">
     <title><?= isset($pageTitle) ? htmlspecialchars($pageTitle) . ' | ' : '' ?>FinanzasApp</title>
-    <link rel="stylesheet" href="/finanzas/public/assets/css/app.css">
+    <link rel="stylesheet" href="/finanzas/public/assets/css/app.css?v=<?= time() ?>">
 </head>
 <body>
 <div class="app-layout">

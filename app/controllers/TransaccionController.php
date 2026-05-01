@@ -44,7 +44,7 @@ class TransaccionController extends BaseController {
         $categorias = $this->categoriaModel->getAll($this->userId());
 
         if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-            $errors = $this->required(['negocio_id','cuenta_id','tipo','monto','fecha'], $_POST);
+            $errors = $this->required(['cuenta_id','tipo','monto','fecha'], $_POST);
             if ((float)$_POST['monto'] <= 0) $errors[] = 'El monto debe ser mayor a 0.';
 
             if (empty($errors)) {
@@ -53,7 +53,7 @@ class TransaccionController extends BaseController {
 
                 $id = $this->model->create([
                     'usuario_id'       => $this->userId(),
-                    'negocio_id'       => (int)$_POST['negocio_id'],
+                    'negocio_id'       => $_POST['negocio_id'] ?: null,
                     'cuenta_id'        => (int)$_POST['cuenta_id'],
                     'tipo'             => $tipo,
                     'monto'            => $monto,

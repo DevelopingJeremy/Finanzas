@@ -49,9 +49,9 @@
 
             <div class="form-row">
                 <div class="form-group">
-                    <label class="form-label" for="negocio_id">Negocio *</label>
-                    <select id="negocio_id" name="negocio_id" class="form-control" required>
-                        <option value="">— Seleccionar —</option>
+                    <label class="form-label" for="negocio_id">Negocio (Opcional)</label>
+                    <select id="negocio_id" name="negocio_id" class="form-control">
+                        <option value="">— Ninguno / Personal —</option>
                         <?php foreach ($negocios as $n): ?>
                         <option value="<?= $n['id'] ?>"><?= htmlspecialchars($n['nombre']) ?></option>
                         <?php endforeach; ?>
