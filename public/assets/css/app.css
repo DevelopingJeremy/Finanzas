@@ -517,3 +517,10 @@ tbody tr:hover td { background: var(--bg-hover); color: var(--text); }
 .text-sm { font-size: 0.8rem; } .text-muted { color: var(--text-muted); } .text-green { color: var(--green); }
 .text-red { color: var(--red); } .font-bold { font-weight: 700; } .font-600 { font-weight: 600; }
 .w-full { width: 100%; } .text-center { text-align: center; }
+
+/* ---- Reportes & Pockets ---- */
+.report-section { background: var(--bg-surface); padding: 1.5rem; border-radius: var(--radius); margin-bottom: 2rem; border: 1px solid var(--border); }
+.comparison-badge { font-weight: bold; padding: 0.15rem 0.5rem; border-radius: var(--radius-sm); font-size: 0.75rem; margin-right: 0.25rem; }
+.metric-row { transition: var(--transition); }
+.metric-row:hover td { background: var(--bg-hover) !important; }
+.text-xs { font-size: 0.7rem; }

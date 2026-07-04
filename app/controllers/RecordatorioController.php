@@ -90,7 +90,7 @@ class RecordatorioController extends BaseController {
                 $this->flash('success','Recordatorio actualizado.'); $this->redirect('/?c=recordatorios&a=index');
             }
             $this->render('recordatorios/form',
-                compact('errors','negocios','categorias','cuentas','subcuentas','clientes') + ['recordatorio'=>POST,'accion'=>'Editar'],
+                compact('errors','negocios','categorias','cuentas','subcuentas','clientes') + ['recordatorio'=>$_POST,'accion'=>'Editar'],
                 'Editar Recordatorio');
         } else {
             $this->render('recordatorios/form',
@@ -104,12 +104,14 @@ class RecordatorioController extends BaseController {
         $rec = $this->model->findById($id, $this->userId());
         if ($rec) {
             $this->model->marcarPagado($id, $this->userId());
-            // Mensaje diferenciado según si es recurrente o no
-            if (($rec['frecuencia'] ?? 'ninguna') !== 'ninguna') {
-                $this->flash('success', '✓ Marcado como pagado. La próxima fecha fue actualizada automáticamente.');
+
+            $accion = $rec['tipo'] === 'pagar' ? 'pagado' : 'cobrado';
+            $frecuencia = $rec['frecuencia'] ?? 'ninguna';
+
+            if ($frecuencia !== 'ninguna') {
+                $this->flash('success', "✓ Recordatorio {$accion}. Se creó la transacción y la próxima fecha fue actualizada automáticamente.");
             } else {
-                $tipo = $rec['tipo'] === 'pagar' ? 'pagado' : 'cobrado';
-                $this->flash('success', "✓ Recordatorio marcado como {$tipo}. Saldo actualizado.");
+                $this->flash('success', "✓ Recordatorio {$accion}. Se creó la transacción y se actualizó el saldo.");
             }
         }
         $this->redirect('/?c=recordatorios&a=index');

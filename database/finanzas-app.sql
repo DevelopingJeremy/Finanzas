@@ -156,7 +156,7 @@ CREATE TABLE recordatorios (
     monto DECIMAL(12,2),
     fecha_vencimiento DATETIME,
     es_automatico BOOLEAN DEFAULT FALSE,
-    frecuencia ENUM('ninguna', 'diario', 'semanal', 'mensual') DEFAULT 'ninguna',
+    frecuencia ENUM('ninguna', 'diario', 'semanal', 'mensual', 'anual') DEFAULT 'ninguna',
     categoria_id INT NULL,
     cuenta_id INT NULL,
     subcuenta_id INT NULL, -- 🔥 agregado (te evita errores futuros)

@@ -41,6 +41,7 @@ $controllerMap = [
     'subcuentas'    => 'SubcuentaController',
     'transacciones' => 'TransaccionController',
     'categorias'    => 'CategoriaController',
+    'reportes'      => 'ReporteController',
     'recordatorios' => 'RecordatorioController',
     'clientes'      => 'ClienteController',
 ];

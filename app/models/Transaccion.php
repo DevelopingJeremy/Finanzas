@@ -57,11 +57,21 @@ class Transaccion {
     }
 
     /** Totales por tipo para un usuario */
-    public function getTotalesByTipo(int $userId): array {
-        $stmt = $this->db->prepare(
-            "SELECT tipo, SUM(monto) AS total FROM transacciones WHERE usuario_id=? AND estado='completado' GROUP BY tipo"
-        );
-        $stmt->execute([$userId]);
+    public function getTotalesByTipo(int $userId, ?int $year = null, ?int $month = null): array {
+        $sql = "SELECT tipo, SUM(monto) AS total FROM transacciones WHERE usuario_id=? AND estado='completado'";
+        $params = [$userId];
+        
+        if ($year && $month) {
+            require_once BASE_PATH . '/app/helpers/timezone.php';
+            $range = crMonthRange($year, $month);
+            $sql .= " AND fecha >= ? AND fecha <= ?";
+            $params[] = $range['inicio'];
+            $params[] = $range['fin'];
+        }
+        
+        $sql .= " GROUP BY tipo";
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $rows = $stmt->fetchAll();
         $result = ['ingreso'=>0,'gasto'=>0,'transferencia'=>0];
         foreach ($rows as $r) $result[$r['tipo']] = (float)$r['total'];

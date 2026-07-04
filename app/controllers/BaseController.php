@@ -1,8 +1,12 @@
 <?php
 /**
  * BaseController - Clase base para todos los controladores
- * Provee métodos comunes: render, redirect, flash messages, auth check
+ * Provee métodos comunes: render, redirect, flash messages, auth check, mes activo
  */
+
+// Incluir helper de zona horaria
+require_once BASE_PATH . '/app/helpers/timezone.php';
+
 class BaseController {
 
     /**
@@ -12,6 +16,8 @@ class BaseController {
      * @param string $pageTitle Título de la página
      */
     protected function render(string $view, array $data = [], string $pageTitle = 'Finanzas'): void {
+        // Inyectar mes activo en todas las vistas
+        $data['mesActivo'] = $this->getMesActivo();
         extract($data);
         require_once BASE_PATH . '/app/views/layouts/header.php';
         require_once BASE_PATH . '/app/views/layouts/sidebar.php';
@@ -71,5 +77,41 @@ class BaseController {
             }
         }
         return $errors;
+    }
+
+    // =========================================================================
+    // MES ACTIVO (Global)
+    // =========================================================================
+
+    /**
+     * Obtiene el mes activo desde GET params o sesión.
+     * Si se reciben ?mes=X&anio=Y, actualiza la sesión.
+     * Si no hay nada, usa el mes/año actual de Costa Rica.
+     * @return array ['month' => int, 'year' => int]
+     */
+    protected function getMesActivo(): array {
+        // Si vienen params GET, actualizar sesión
+        if (isset($_GET['mes']) && isset($_GET['anio'])) {
+            $month = max(1, min(12, (int)$_GET['mes']));
+            $year  = max(2020, min(2099, (int)$_GET['anio']));
+            $_SESSION['mes_activo'] = ['month' => $month, 'year' => $year];
+        }
+
+        // Si no hay sesión, usar mes actual de Costa Rica
+        if (!isset($_SESSION['mes_activo'])) {
+            $_SESSION['mes_activo'] = [
+                'month' => crMonth(),
+                'year'  => crYear(),
+            ];
+        }
+
+        return $_SESSION['mes_activo'];
+    }
+
+    /**
+     * Establece el mes activo programáticamente
+     */
+    protected function setMesActivo(int $year, int $month): void {
+        $_SESSION['mes_activo'] = ['month' => $month, 'year' => $year];
     }
 }
