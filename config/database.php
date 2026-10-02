@@ -15,6 +15,9 @@ class Database {
     private string $charset  = 'utf8mb4';
 
     private function __construct() {
+        // Configurar zona horaria de Costa Rica (UTC-6)
+        date_default_timezone_set('America/Costa_Rica');
+
         $dsn = "mysql:host={$this->host};dbname={$this->dbname};charset={$this->charset}";
         $options = [
             PDO::ATTR_ERRMODE            => PDO::ERRMODE_EXCEPTION,
@@ -23,9 +26,27 @@ class Database {
         ];
         try {
             $this->pdo = new PDO($dsn, $this->username, $this->password, $options);
+            $this->pdo->exec("SET time_zone = '-06:00'");
+            $this->ensureSchema();
         } catch (PDOException $e) {
             error_log("DB Error: " . $e->getMessage());
             die(json_encode(['error' => 'Error de conexión a la base de datos.']));
+        }
+    }
+
+    /** Migración automática para asegurar columnas necesarias */
+    private function ensureSchema(): void {
+        try {
+            $cols = $this->pdo->query("SHOW COLUMNS FROM transacciones LIKE 'subcuenta_id'")->fetchAll();
+            if (empty($cols)) {
+                $this->pdo->exec("ALTER TABLE transacciones ADD COLUMN subcuenta_id INT NULL AFTER cuenta_id");
+            }
+            $colsDest = $this->pdo->query("SHOW COLUMNS FROM transacciones LIKE 'subcuenta_destino_id'")->fetchAll();
+            if (empty($colsDest)) {
+                $this->pdo->exec("ALTER TABLE transacciones ADD COLUMN subcuenta_destino_id INT NULL AFTER cuenta_destino_id");
+            }
+        } catch (PDOException $e) {
+            // Continuar si la tabla aún no existe
         }
     }
 
@@ -45,3 +66,4 @@ class Database {
     private function __clone() {}
     public function __wakeup() {}
 }
+

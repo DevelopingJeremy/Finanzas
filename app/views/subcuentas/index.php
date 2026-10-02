@@ -3,7 +3,10 @@
         <h1>👛 Bolsillos (Subcuentas)</h1>
         <p>Distribuye el dinero dentro de tus cuentas</p>
     </div>
-    <a href="/public/?c=subcuentas&a=create" class="btn btn-primary">+ Nuevo Bolsillo</a>
+    <div style="display:flex;gap:.5rem;">
+        <a href="/public/?c=transacciones&a=create&tipo=transferencia" class="btn btn-secondary">🔄 Transferir</a>
+        <a href="/public/?c=subcuentas&a=create" class="btn btn-primary">+ Nuevo Bolsillo</a>
+    </div>
 </div>
 
 <?php if (empty($subcuentas)): ?>

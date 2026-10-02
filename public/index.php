@@ -8,6 +8,9 @@
 define('BASE_PATH', dirname(__DIR__));
 define('BASE_URL', '/public');
 
+// Configurar zona horaria de Costa Rica (UTC-6)
+date_default_timezone_set('America/Costa_Rica');
+
 // Iniciar sesión
 if (session_status() === PHP_SESSION_NONE) {
     session_start();

@@ -88,12 +88,14 @@ CREATE TABLE transacciones (
     usuario_id INT,
     negocio_id INT,
     cuenta_id INT,
+    subcuenta_id INT NULL,
     tipo ENUM('ingreso', 'gasto', 'transferencia'),
     monto DECIMAL(12,2),
     fecha DATETIME,
     descripcion TEXT,
     categoria_id INT NULL,
     cuenta_destino_id INT NULL,
+    subcuenta_destino_id INT NULL,
     estado ENUM('completado', 'pendiente') DEFAULT 'completado',
     es_recurrente BOOLEAN DEFAULT FALSE,
     recordatorio_id INT NULL,
@@ -102,8 +104,10 @@ CREATE TABLE transacciones (
     FOREIGN KEY (usuario_id) REFERENCES usuarios(id) ON DELETE CASCADE,
     FOREIGN KEY (negocio_id) REFERENCES negocios(id) ON DELETE CASCADE,
     FOREIGN KEY (cuenta_id) REFERENCES cuentas(id) ON DELETE CASCADE,
+    FOREIGN KEY (subcuenta_id) REFERENCES subcuentas(id) ON DELETE SET NULL,
     FOREIGN KEY (categoria_id) REFERENCES categorias(id) ON DELETE SET NULL,
-    FOREIGN KEY (cuenta_destino_id) REFERENCES cuentas(id) ON DELETE SET NULL
+    FOREIGN KEY (cuenta_destino_id) REFERENCES cuentas(id) ON DELETE SET NULL,
+    FOREIGN KEY (subcuenta_destino_id) REFERENCES subcuentas(id) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
 
 -- =========================

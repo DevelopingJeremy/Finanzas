@@ -35,7 +35,7 @@
             <div class="form-group">
                 <label class="form-label" for="fecha_vencimiento">Fecha Vencimiento *</label>
                 <input type="datetime-local" id="fecha_vencimiento" name="fecha_vencimiento" class="form-control"
-                    value="<?= htmlspecialchars(isset($recordatorio['fecha_vencimiento']) ? date('Y-m-d\TH:i', strtotime($recordatorio['fecha_vencimiento'])) : '') ?>"
+                    value="<?= htmlspecialchars(!empty($recordatorio['fecha_vencimiento']) ? date('Y-m-d\TH:i', strtotime($recordatorio['fecha_vencimiento'])) : date('Y-m-d\TH:i')) ?>"
                     required>
             </div>
         </div>

@@ -96,7 +96,15 @@ function fmtT(float $n): string
                             <td><?= date('d/m/Y', strtotime($t['fecha'])) ?></td>
                             <td class="td-bold"><?= htmlspecialchars($t['descripcion'] ?: '—') ?></td>
                             <td class="text-muted"><?= htmlspecialchars($t['negocio_nombre'] ?? '—') ?></td>
-                            <td class="text-muted"><?= htmlspecialchars($t['cuenta_nombre'] ?? '—') ?></td>
+                            <td class="text-muted">
+                                <?php if ($t['tipo'] === 'transferencia'): ?>
+                                    <span>🏦 <?= htmlspecialchars($t['cuenta_nombre'] ?? '—') ?><?= !empty($t['subcuenta_nombre']) ? ' (👛 ' . htmlspecialchars($t['subcuenta_nombre']) . ')' : '' ?></span>
+                                    <span style="color:var(--blue, #3b82f6); font-weight:bold;"> ➔ </span>
+                                    <span>🏦 <?= htmlspecialchars($t['cuenta_destino_nombre'] ?? '—') ?><?= !empty($t['subcuenta_destino_nombre']) ? ' (👛 ' . htmlspecialchars($t['subcuenta_destino_nombre']) . ')' : '' ?></span>
+                                <?php else: ?>
+                                    <span>🏦 <?= htmlspecialchars($t['cuenta_nombre'] ?? '—') ?><?= !empty($t['subcuenta_nombre']) ? ' <span class="text-muted">›</span> 👛 ' . htmlspecialchars($t['subcuenta_nombre']) : '' ?></span>
+                                <?php endif; ?>
+                            </td>
                             <td class="text-muted"><?= htmlspecialchars($t['categoria_nombre'] ?? '—') ?></td>
                             <td><span class="badge <?= $badges[$t['tipo']] ?>"><?= $t['tipo'] ?></span></td>
                             <td class="<?= $amtClass ?>"><?= fmtT((float) $t['monto']) ?></td>

@@ -6,12 +6,15 @@ class Transaccion {
 
     public function getAll(int $userId, array $filters = []): array {
         $sql = "SELECT t.*, n.nombre AS negocio_nombre, c.nombre AS cuenta_nombre,
-                       cat.nombre AS categoria_nombre, cd.nombre AS cuenta_destino_nombre
+                       cat.nombre AS categoria_nombre, cd.nombre AS cuenta_destino_nombre,
+                       sc.nombre AS subcuenta_nombre, scd.nombre AS subcuenta_destino_nombre
                 FROM transacciones t
                 LEFT JOIN negocios n     ON t.negocio_id = n.id
                 LEFT JOIN cuentas c      ON t.cuenta_id  = c.id
+                LEFT JOIN subcuentas sc  ON t.subcuenta_id = sc.id
                 LEFT JOIN categorias cat ON t.categoria_id = cat.id
                 LEFT JOIN cuentas cd     ON t.cuenta_destino_id = cd.id
+                LEFT JOIN subcuentas scd ON t.subcuenta_destino_id = scd.id
                 WHERE t.usuario_id = ?";
         $params = [$userId];
 
@@ -28,20 +31,34 @@ class Transaccion {
     }
 
     public function findById(int $id, int $userId): ?array {
-        $stmt = $this->db->prepare("SELECT * FROM transacciones WHERE id=? AND usuario_id=?");
+        $stmt = $this->db->prepare(
+            "SELECT t.*, sc.nombre AS subcuenta_nombre, scd.nombre AS subcuenta_destino_nombre
+             FROM transacciones t
+             LEFT JOIN subcuentas sc  ON t.subcuenta_id = sc.id
+             LEFT JOIN subcuentas scd ON t.subcuenta_destino_id = scd.id
+             WHERE t.id=? AND t.usuario_id=?"
+        );
         $stmt->execute([$id, $userId]);
         return $stmt->fetch() ?: null;
     }
 
     public function create(array $data): string|false {
         $stmt = $this->db->prepare(
-            "INSERT INTO transacciones (usuario_id, negocio_id, cuenta_id, tipo, monto, fecha, descripcion, categoria_id, cuenta_destino_id, estado)
-             VALUES (?,?,?,?,?,?,?,?,?,?)"
+            "INSERT INTO transacciones (usuario_id, negocio_id, cuenta_id, subcuenta_id, tipo, monto, fecha, descripcion, categoria_id, cuenta_destino_id, subcuenta_destino_id, estado)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?,?)"
         );
         $ok = $stmt->execute([
-            $data['usuario_id'], $data['negocio_id'], $data['cuenta_id'],
-            $data['tipo'], $data['monto'], $data['fecha'], $data['descripcion'],
-            $data['categoria_id'] ?: null, $data['cuenta_destino_id'] ?: null,
+            $data['usuario_id'],
+            $data['negocio_id'] ?: null,
+            $data['cuenta_id'],
+            $data['subcuenta_id'] ?: null,
+            $data['tipo'],
+            $data['monto'],
+            $data['fecha'],
+            $data['descripcion'],
+            $data['categoria_id'] ?: null,
+            $data['cuenta_destino_id'] ?: null,
+            $data['subcuenta_destino_id'] ?: null,
             $data['estado'] ?? 'completado'
         ]);
         return $ok ? $this->db->lastInsertId() : false;
@@ -84,10 +101,15 @@ class Transaccion {
 
     public function getUltimas(int $userId, int $limit = 5): array {
         $stmt = $this->db->prepare(
-            "SELECT t.*, c.nombre AS cuenta_nombre, n.nombre AS negocio_nombre
+            "SELECT t.*, c.nombre AS cuenta_nombre, n.nombre AS negocio_nombre,
+                    sc.nombre AS subcuenta_nombre, cd.nombre AS cuenta_destino_nombre,
+                    scd.nombre AS subcuenta_destino_nombre
              FROM transacciones t
-             LEFT JOIN cuentas c ON t.cuenta_id = c.id
-             LEFT JOIN negocios n ON t.negocio_id = n.id
+             LEFT JOIN cuentas c      ON t.cuenta_id = c.id
+             LEFT JOIN subcuentas sc  ON t.subcuenta_id = sc.id
+             LEFT JOIN cuentas cd     ON t.cuenta_destino_id = cd.id
+             LEFT JOIN subcuentas scd ON t.subcuenta_destino_id = scd.id
+             LEFT JOIN negocios n     ON t.negocio_id = n.id
              WHERE t.usuario_id=?
              ORDER BY t.fecha DESC LIMIT ?"
         );
