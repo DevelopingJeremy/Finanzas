@@ -9,9 +9,8 @@ class Database {
 
     private string $host     = 'localhost';
     private string $dbname   = 'finanzas_app';
-    private string $username = 'root'; // MAMP
-    // private string $username = 'root'; // XAMP
-    private string $password = 'root';
+    private string $username = 'root';
+    private string $password = '';
     private string $charset  = 'utf8mb4';
 
     private function __construct() {

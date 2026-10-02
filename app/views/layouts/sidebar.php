@@ -61,6 +61,11 @@ function isActive(string $ctrl): string
             </a>
         </li>
         <li>
+            <a href="/public/?c=reportes&a=index" class="<?= isActive('reportes') ?>">
+                <span class="nav-icon">📈</span> Reportes
+            </a>
+        </li>
+        <li>
             <a href="/public/?c=recordatorios&a=index" class="<?= isActive('recordatorios') ?>">
                 <span class="nav-icon">🔔</span> Recordatorios
             </a>

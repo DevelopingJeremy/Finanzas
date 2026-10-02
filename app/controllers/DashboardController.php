@@ -1,31 +1,46 @@
 <?php
-require_once BASE_PATH . '/app/models/Transaccion.php';
-require_once BASE_PATH . '/app/models/Cuenta.php';
+require_once BASE_PATH . '/app/services/FinanceAnalyticsService.php';
 require_once BASE_PATH . '/app/models/Negocio.php';
-require_once BASE_PATH . '/app/models/Recordatorio.php';
 
 class DashboardController extends BaseController {
     public function index(): void {
         $userId = $this->userId();
+        $mesActivo = $this->getMesActivo();
+        $year  = $mesActivo['year'];
+        $month = $mesActivo['month'];
 
-        $transModel  = new Transaccion();
-        $cuentaModel = new Cuenta();
-        $negocioModel= new Negocio();
-        $recModel    = new Recordatorio();
+        $analytics = new FinanceAnalyticsService();
 
-        $totales      = $transModel->getTotalesByTipo($userId);
-        $porNegocio   = $transModel->getTotalesByNegocio($userId);
-        $ultimas      = $transModel->getUltimas($userId, 6);
-        $cuentas      = $cuentaModel->getAll($userId);
-        $negocios     = $negocioModel->getAll($userId);
-        $proximos     = $recModel->getProximos($userId, 7);
+        // Saldo total real (NO depende del mes)
+        $saldoTotal = $analytics->getSaldoTotal($userId);
 
-        $saldoTotal  = array_sum(array_column($cuentas, 'saldo'));
-        $balance     = $totales['ingreso'] - $totales['gasto'];
+        // Cuentas con bolsillos y disponible
+        $cuentas = $analytics->getCuentasConBolsillos($userId);
+
+        // Totales del mes activo
+        $totales = $analytics->getTotalesMes($userId, $year, $month);
+        $balance = $totales['balance'];
+
+        // Últimas transacciones del mes activo
+        $ultimas = $analytics->getUltimasTransacciones($userId, 6, $year, $month);
+
+        // Resumen por negocio del mes activo
+        $porNegocio = $analytics->getTotalesPorNegocioMes($userId, $year, $month);
+
+        // Recordatorios próximos (siempre desde hoy, no depende del mes)
+        $proximos = $analytics->getRecordatoriosProximos($userId, 7);
+
+        // Comparación con mes anterior
+        $comparativa = $analytics->getComparativaMesAnterior($userId, $year, $month);
+
+        // Negocios para referencia
+        $negocioModel = new Negocio();
+        $negocios = $negocioModel->getAll($userId);
 
         $this->render('dashboard/index', compact(
             'totales','porNegocio','ultimas','cuentas','negocios',
-            'proximos','saldoTotal','balance'
+            'proximos','saldoTotal','balance','comparativa',
+            'year','month'
         ), 'Dashboard');
     }
 }

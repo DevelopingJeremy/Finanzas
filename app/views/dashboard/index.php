@@ -5,12 +5,35 @@ function fmt(float $n): string
     return '₡' . number_format($n, 2, ',', '.');
 }
 ?>
-<div class="page-header">
+<?php
+$mesesNombres = [
+    1 => 'Enero', 2 => 'Febrero', 3 => 'Marzo', 4 => 'Abril',
+    5 => 'Mayo', 6 => 'Junio', 7 => 'Julio', 8 => 'Agosto',
+    9 => 'Septiembre', 10 => 'Octubre', 11 => 'Noviembre', 12 => 'Diciembre'
+];
+$mesActivoNombre = $mesesNombres[$month] ?? '';
+?>
+<div class="page-header" style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:1rem;">
     <div>
         <h1>📊 Dashboard</h1>
         <p>Bienvenido, <?= htmlspecialchars($_SESSION['usuario_nombre'] ?? '') ?> — <?= date('d/m/Y') ?></p>
     </div>
-    <a href="/public/?c=transacciones&a=create" class="btn btn-primary">+ Nueva Transacción</a>
+    <div style="display:flex;align-items:center;gap:1rem;">
+        <form method="GET" action="/public/index.php" class="month-selector" style="display:flex;align-items:center;gap:0.5rem;">
+            <!-- Selectores de mes y año -->
+            <select name="mes" class="form-control" style="width:auto;padding:0.25rem 0.5rem;" onchange="this.form.submit()">
+                <?php foreach($mesesNombres as $num => $nom): ?>
+                    <option value="<?= $num ?>" <?= $num == $month ? 'selected' : '' ?>><?= $nom ?></option>
+                <?php endforeach; ?>
+            </select>
+            <select name="anio" class="form-control" style="width:auto;padding:0.25rem 0.5rem;" onchange="this.form.submit()">
+                <?php for($y = 2020; $y <= 2030; $y++): ?>
+                    <option value="<?= $y ?>" <?= $y == $year ? 'selected' : '' ?>><?= $y ?></option>
+                <?php endfor; ?>
+            </select>
+        </form>
+        <a href="/public/?c=transacciones&a=create" class="btn btn-primary">+ Nueva Transacción</a>
+    </div>
 </div>
 
 <!-- KPIs principales -->
@@ -25,19 +48,19 @@ function fmt(float $n): string
         <div class="stat-icon">📈</div>
         <div class="stat-label">Ingresos</div>
         <div class="stat-value green"><?= fmt($totales['ingreso']) ?></div>
-        <div class="stat-sub">Total acumulado</div>
+        <div class="stat-sub">Mes de <?= $mesActivoNombre ?> <?= $year ?></div>
     </div>
     <div class="stat-card red">
         <div class="stat-icon">📉</div>
         <div class="stat-label">Gastos</div>
         <div class="stat-value red"><?= fmt($totales['gasto']) ?></div>
-        <div class="stat-sub">Total acumulado</div>
+        <div class="stat-sub">Mes de <?= $mesActivoNombre ?> <?= $year ?></div>
     </div>
     <div class="stat-card <?= $balance >= 0 ? '' : 'red' ?>">
         <div class="stat-icon">⚖️</div>
         <div class="stat-label">Balance</div>
         <div class="stat-value <?= $balance >= 0 ? 'green' : 'red' ?>"><?= fmt($balance) ?></div>
-        <div class="stat-sub">Ingresos - Gastos</div>
+        <div class="stat-sub">Mes de <?= $mesActivoNombre ?> <?= $year ?></div>
     </div>
 </div>
 
@@ -55,15 +78,31 @@ function fmt(float $n): string
             </div>
         <?php else: ?>
             <?php foreach ($cuentas as $c): ?>
-                <div
-                    style="display:flex;justify-content:space-between;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--border);">
-                    <div>
-                        <div class="font-600" style="font-size:.875rem;"><?= htmlspecialchars($c['nombre']) ?></div>
-                        <div class="text-muted text-sm"><?= htmlspecialchars($c['tipo']) ?> —
-                            <?= htmlspecialchars($c['moneda']) ?></div>
+                <div class="account-card" style="padding:1rem; border:1px solid var(--border); border-radius:8px; margin-bottom:1rem;">
+                    <div style="display:flex;justify-content:space-between;align-items:center;">
+                        <div>
+                            <div class="font-600" style="font-size:1.1rem;"><?= htmlspecialchars($c['nombre']) ?></div>
+                            <div class="text-muted text-sm"><?= htmlspecialchars($c['tipo']) ?> — <?= htmlspecialchars($c['moneda']) ?></div>
+                        </div>
+                        <div class="font-bold <?= $c['saldo'] >= 0 ? 'text-green' : 'text-red' ?>" style="font-size:1.1rem;">
+                            <?= fmt((float) $c['saldo']) ?>
+                        </div>
                     </div>
-                    <div class="font-bold <?= $c['saldo'] >= 0 ? 'text-green' : 'text-red' ?>"><?= fmt((float) $c['saldo']) ?>
-                    </div>
+                    <?php if (!empty($c['bolsillos'])): ?>
+                        <div class="account-pockets" style="margin-top:1rem; padding-top:1rem; border-top:1px dashed var(--border);">
+                            <div class="text-sm font-600 text-muted mb-2">Bolsillos:</div>
+                            <?php foreach ($c['bolsillos'] as $b): ?>
+                                <div style="display:flex;justify-content:space-between; margin-bottom:0.25rem; font-size:0.9rem;">
+                                    <span>• <?= htmlspecialchars($b['nombre']) ?></span>
+                                    <span class="font-bold text-muted"><?= fmt((float) $b['saldo']) ?></span>
+                                </div>
+                            <?php endforeach; ?>
+                            <div class="account-available" style="display:flex;justify-content:space-between; margin-top:0.5rem; font-size:0.95rem; font-weight:600;">
+                                <span>Disponible:</span>
+                                <span class="text-green"><?= fmt((float) $c['disponible']) ?></span>
+                            </div>
+                        </div>
+                    <?php endif; ?>
                 </div>
             <?php endforeach; ?>
         <?php endif; ?>

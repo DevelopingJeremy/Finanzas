@@ -1,5 +1,16 @@
 <?php
-/** Model: Recordatorio */
+/**
+ * Model: Recordatorio
+ * 
+ * Al marcar como pagado/cobrado:
+ * 1. Crea una transacción automática con los datos del recordatorio
+ * 2. Actualiza saldos de cuenta y subcuenta
+ * 3. Si es recurrente, avanza la fecha de vencimiento
+ * 4. Si no es recurrente, marca como pagado
+ */
+
+require_once BASE_PATH . '/app/helpers/timezone.php';
+
 class Recordatorio {
     private PDO $db;
     public function __construct() { $this->db = Database::getInstance()->getConnection(); }
@@ -23,13 +34,17 @@ class Recordatorio {
     }
 
     public function getProximos(int $userId, int $dias = 7): array {
+        $ahora = crNow();
+        $limite = clone $ahora;
+        $limite->modify("+{$dias} days");
+
         $stmt = $this->db->prepare(
             "SELECT * FROM recordatorios
              WHERE usuario_id=? AND estado='pendiente'
-               AND fecha_vencimiento BETWEEN NOW() AND DATE_ADD(NOW(), INTERVAL ? DAY)
+               AND fecha_vencimiento BETWEEN ? AND ?
              ORDER BY fecha_vencimiento ASC"
         );
-        $stmt->execute([$userId, $dias]);
+        $stmt->execute([$userId, $ahora->format('Y-m-d H:i:s'), $limite->format('Y-m-d H:i:s')]);
         return $stmt->fetchAll();
     }
 
@@ -85,33 +100,57 @@ class Recordatorio {
     }
 
     /**
-     * Marca como pagado/cobrado:
-     * - Actualiza el saldo de cuenta (y subcuenta si aplica)
-     * - Si es un cobro y tiene cliente, lo registra en pagos_clientes
-     * - Si tiene frecuencia, REABRE el recordatorio con la siguiente fecha
-     *   en lugar de dejarlo en estado "pagado"
+     * Marca como pagado/cobrado con creación automática de transacción:
+     * 
+     * Paso 1: Crea transacción con los datos exactos del recordatorio
+     * Paso 2: Actualiza saldos de cuenta y subcuenta
+     * Paso 3: Si es cobro con cliente, registra pago_cliente
+     * Paso 4: Si recurrente → avanza fecha; si no → marca pagado
      */
     public function marcarPagado(int $id, int $userId): bool {
         $rec = $this->findById($id, $userId);
         if (!$rec) return false;
 
-        $monto   = (float)$rec['monto'];
-        // "pagar" sale de la cuenta (negativo), "cobrar" entra (positivo)
-        $delta   = $rec['tipo'] === 'pagar' ? -$monto : $monto;
+        $monto = (float)$rec['monto'];
+        // "pagar" = gasto (sale dinero), "cobrar" = ingreso (entra dinero)
+        $tipoTransaccion = $rec['tipo'] === 'pagar' ? 'gasto' : 'ingreso';
+        $delta = $rec['tipo'] === 'pagar' ? -$monto : $monto;
+        $ahoraCR = crNowStr();
 
-        // --- 1. Afectar saldo de cuenta principal ---
+        // --- PASO 1: Crear transacción automática ---
+        $stmtTrans = $this->db->prepare(
+            "INSERT INTO transacciones
+                (usuario_id, negocio_id, cuenta_id, tipo, monto, fecha,
+                 descripcion, categoria_id, estado, es_recurrente, recordatorio_id)
+             VALUES (?,?,?,?,?,?,?,?,?,?,?)"
+        );
+        $stmtTrans->execute([
+            $userId,
+            $rec['negocio_id'] ?: null,
+            $rec['cuenta_id']  ?: null,
+            $tipoTransaccion,
+            $monto,
+            $rec['fecha_vencimiento'],  // Fecha de ejecución = fecha de vencimiento
+            'Recordatorio: ' . $rec['nombre'],
+            $rec['categoria_id'] ?: null,
+            'completado',
+            ($rec['frecuencia'] ?? 'ninguna') !== 'ninguna' ? 1 : 0,
+            $id, // vincular con recordatorio
+        ]);
+
+        // --- PASO 2: Afectar saldo de cuenta principal ---
         if ($rec['cuenta_id']) {
             $this->db->prepare("UPDATE cuentas SET saldo = saldo + ? WHERE id=?")
                      ->execute([$delta, $rec['cuenta_id']]);
         }
 
-        // --- 2. Afectar saldo de subcuenta/bolsillo ---
+        // --- PASO 2b: Afectar saldo de subcuenta/bolsillo ---
         if ($rec['subcuenta_id']) {
             $this->db->prepare("UPDATE subcuentas SET saldo = saldo + ? WHERE id=?")
                      ->execute([$delta, $rec['subcuenta_id']]);
         }
 
-        // --- 3. Si es COBRO y tiene cliente, registrar en historial de pagos del cliente ---
+        // --- PASO 3: Si es COBRO y tiene cliente, registrar pago_cliente ---
         if ($rec['tipo'] === 'cobrar' && $rec['cliente_id']) {
             $stmtPago = $this->db->prepare(
                 "INSERT INTO pagos_clientes (cliente_id, usuario_id, negocio_id, monto, fecha, estado, descripcion)
@@ -122,37 +161,38 @@ class Recordatorio {
                 $userId,
                 $rec['negocio_id'],
                 $monto,
-                date('Y-m-d H:i:s'),
+                $ahoraCR,
                 'pagado',
                 "Cobro de recordatorio: " . $rec['nombre']
             ]);
         }
 
-        // --- 4. Calcular siguiente fecha si es recurrente ---
+        // --- PASO 4: Calcular siguiente fecha si es recurrente ---
         $frecuencia = $rec['frecuencia'] ?? 'ninguna';
         if ($frecuencia !== 'ninguna') {
-            $fechaActual = new DateTime($rec['fecha_vencimiento']);
+            $fechaActual = new DateTime($rec['fecha_vencimiento'], crTimezone());
             switch ($frecuencia) {
                 case 'diario':   $fechaActual->modify('+1 day');   break;
                 case 'semanal':  $fechaActual->modify('+1 week');  break;
                 case 'mensual':  $fechaActual->modify('+1 month'); break;
+                case 'anual':    $fechaActual->modify('+1 year');  break;
             }
             $nuevaFecha = $fechaActual->format('Y-m-d H:i:s');
 
             // Reabre el recordatorio con la siguiente fecha (sigue pendiente)
             $stmt = $this->db->prepare(
                 "UPDATE recordatorios
-                 SET estado='pendiente', fecha_vencimiento=?, ultima_ejecucion=NOW()
+                 SET estado='pendiente', fecha_vencimiento=?, ultima_ejecucion=?
                  WHERE id=? AND usuario_id=?"
             );
-            return $stmt->execute([$nuevaFecha, $id, $userId]);
+            return $stmt->execute([$nuevaFecha, $ahoraCR, $id, $userId]);
         }
 
-        // --- 5. Sin frecuencia: marcar pagado definitivamente ---
+        // --- PASO 5: Sin frecuencia: marcar pagado definitivamente ---
         $stmt = $this->db->prepare(
-            "UPDATE recordatorios SET estado='pagado', ultima_ejecucion=NOW() WHERE id=? AND usuario_id=?"
+            "UPDATE recordatorios SET estado='pagado', ultima_ejecucion=? WHERE id=? AND usuario_id=?"
         );
-        return $stmt->execute([$id, $userId]);
+        return $stmt->execute([$ahoraCR, $id, $userId]);
     }
 
     public function delete(int $id, int $userId): bool {
